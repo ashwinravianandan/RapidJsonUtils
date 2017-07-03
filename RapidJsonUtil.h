@@ -102,6 +102,25 @@ public:
    {
    }
 
+   JsonObject(rapidjson::Value& val):_jsonVal( val ),
+   _allocator( _doc.GetAllocator() ){
+   }
+
+   JsonObject& operator =(const JsonObject& val){
+      if( this != &val._jsonVal )
+      {
+         _jsonVal = val._jsonVal;
+      }
+      return *this;
+   }
+   JsonObject& operator =(rapidjson::Value& val){
+      if( &this->_jsonVal != &val )
+      {
+         _jsonVal = val;
+      }
+      return *this;
+   }
+
    template<typename V>
       JsonObject<T,U>& put(const V& val)
       {
@@ -113,6 +132,20 @@ public:
       JsonObject<T,U>& put( const std::string& key, const V& val )
       {
          _trait.put( _jsonVal, key, val, _allocator );
+         return *this;
+      }
+
+   template<typename V>
+      JsonObject<T,U>& get(V& val)
+      {
+         _trait.get( _jsonVal, val );
+         return *this;
+      }
+
+   template<typename V>
+      JsonObject<T,U>& get(const std::string& key, V& val)
+      {
+         _trait.get( _jsonVal, key, val );
          return *this;
       }
 
@@ -134,6 +167,12 @@ public:
       _jsonVal.Accept( writer );
       return std::string{ buff.GetString() };
    }
+
+};
+
+template<typename T, rapidjson::Type U>
+struct is_json<JsonObject<T,U>>{
+   static constexpr bool value = true;
 };
 
 
@@ -142,9 +181,9 @@ struct JsonTrait<rapidjson::Value, rapidjson::kObjectType>{
    enum{ value = rapidjson::kObjectType };
 
    template <typename T, typename X = typename std::enable_if<!is_json<typename std::remove_cv<T>::type>::value>::type >
-      void get( rapidjson::Value& val, const std::string& key, const T& outVal )
+      void get( rapidjson::Value& val, const std::string& key, T& outVal )
       {
-         JsonTrait<std::remove_cv<T>> trait;
+         JsonTrait<typename std::remove_cv_t<T>> trait;
          auto it = val.FindMember( key.c_str() );
          if( it != val.MemberEnd() )
          {
@@ -152,10 +191,11 @@ struct JsonTrait<rapidjson::Value, rapidjson::kObjectType>{
          }
       }
 
-   template <typename T, typename X = typename std::enable_if<is_json<typename std::remove_cv<T>::type>::value>::type>
-      void get( rapidjson::Value& , std::string& , const T&)
+   template <typename T, typename X = typename std::enable_if<is_json<typename std::remove_cv<T>::type>::value>::type, typename Y = void>
+      void get( rapidjson::Value& jVal, const std::string& key, T& outVal)
       {
-         //static_assert( false, "Do you really want to read members into Json" );
+         auto it = jVal.FindMember( key.c_str() );
+         outVal = it->value;
       }
 
    template<typename T, typename X = typename std::enable_if<is_json<typename std::remove_cv<T>::type>::value>::type>
@@ -209,11 +249,6 @@ struct JsonTrait<rapidjson::Value, rapidjson::kArrayType>{
       JsonTrait<typename std::decay<typename std::remove_cv_t<T>>::type> trait;
       jval.PushBack( const_cast<T&>(input), alloc );
    }
-};
-
-template<typename T, rapidjson::Type U>
-struct is_json<JsonObject<T,U>>{
-   static constexpr bool value = true;
 };
 
 

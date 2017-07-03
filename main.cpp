@@ -45,6 +45,25 @@ void fluentInterface()
    std::cout<<stringArray.toString()<<std::endl;
 }
 
+void readAndWriteToJson(){
+   JsonObject<rapidjson::Value, rapidjson::kObjectType>  Obj;
+   JsonObject<rapidjson::Value, rapidjson::kArrayType>  Array, outputArr;
+   for( int i = 0; i < 500; ++i )
+      Array.put( i );
+
+   Obj.put(  "IntArray", Array );
+   Obj.get( "IntArray", outputArr );
+   for( auto it = static_cast<rapidjson::Value&>( outputArr ).Begin();
+         it != static_cast<rapidjson::Value&>( outputArr ).End();
+         ++it )
+   {
+      JsonObject<int> tmp{*it}; int val;
+      tmp.get( val );
+      std::cout<<val<<std::endl;
+   }
+
+}
+
 int main()
 {
    std::cout<<"Without Utils: \n";
@@ -53,6 +72,18 @@ int main()
    usingUtils();
    std::cout<<"Fluent Interface:\n";
    fluentInterface();
+
+   JsonObject<int> test;
+   test.put( 3 );
+   int x,y;
+   test.get( x );
+   std::cout<<"X is "<<x<<std::endl;
+   JsonObject<rapidjson::Value, rapidjson::kObjectType>  Obj;
+   Obj.put( "Y", 2 );
+   std::cout<<Obj.toString()<<std::endl;
+   Obj.get( "Y", y );
+   std::cout<<"Y is "<<y<<std::endl;
+   readAndWriteToJson();
    return 0;
 }
 
