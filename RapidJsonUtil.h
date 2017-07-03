@@ -35,13 +35,28 @@ struct JsonTrait<bool>{
 
 template<>
 struct JsonTrait<std::string>{
-   enum{ value = rapidjson::kTrueType };
+   enum{ value = rapidjson::kStringType };
    void get( rapidjson::Value& val, std::string& retVal )
    {
       retVal = std::string{val.GetString()};
    }
    void put( rapidjson::Value& jval , const std::string& val,
          decltype( rapidjson::Document().GetAllocator() )& alloc){
+      jval.SetString( val.c_str(), val.length(), alloc );
+   }
+};
+
+template<>
+struct JsonTrait<char*>{
+   enum{ value = rapidjson::kStringType };
+   void get( rapidjson::Value& , char*& )
+   {
+      //static_assert( true, "unsupported" );
+   }
+   void put( rapidjson::Value& jval , const char* szVal,
+         decltype( rapidjson::Document().GetAllocator() )& alloc){
+      if( nullptr == szVal ) return;
+      std::string val{ szVal };
       jval.SetString( val.c_str(), val.length(), alloc );
    }
 };
@@ -133,7 +148,7 @@ template <typename T, rapidjson::Type U = rapidjson::kNullType>
 class JsonObject
 {
    static constexpr rapidjson::Type type = U;
-   JsonTrait<T,U>  _trait;
+   JsonTrait<typename std::decay<T>::type,U>  _trait;
    rapidjson::Value& _jsonVal;
    rapidjson::Document _doc;
    decltype( rapidjson::Document().GetAllocator() )& _allocator;
@@ -167,11 +182,13 @@ public:
          _trait.put( _jsonVal, key, val, _allocator );
       }
 
+
    operator rapidjson::Value&()
    {
       return _jsonVal;
    }
-   operator std::string()
+
+   std::string toString()
    {
       rapidjson::StringBuffer buff;
       rapidjson::Writer<rapidjson::StringBuffer> writer{ buff };
