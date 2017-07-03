@@ -76,7 +76,7 @@ template <typename T, rapidjson::Type U = rapidjson::kNullType>
 class JsonObject
 {
    static constexpr rapidjson::Type type = U;
-   JsonTrait<typename std::decay<T>::type,U>  _trait;
+   JsonTrait<typename std::decay<typename std::remove_cv_t<T>>::type,U>  _trait;
    rapidjson::Value& _jsonVal;
    rapidjson::Document _doc;
    decltype( rapidjson::Document().GetAllocator() )& _allocator;
@@ -103,15 +103,17 @@ public:
    }
 
    template<typename V>
-      void put(const V& val)
+      JsonObject<T,U>& put(const V& val)
       {
          _trait.put( _jsonVal, val, _allocator );
+         return *this;
       }
 
    template<typename V>
-      void put( const std::string& key, const V& val )
+      JsonObject<T,U>& put( const std::string& key, const V& val )
       {
          _trait.put( _jsonVal, key, val, _allocator );
+         return *this;
       }
 
 
@@ -193,7 +195,7 @@ struct JsonTrait<rapidjson::Value, rapidjson::kArrayType>{
    void put( rapidjson::Value& jval, T& input,
          decltype( rapidjson::Document().GetAllocator() )& alloc )
    {
-      JsonTrait<typename std::remove_cv<T>::type> trait;
+      JsonTrait<typename std::decay<typename std::remove_cv_t<T>>::type> trait;
       rapidjson::Value inputJVal;
       trait.put( inputJVal, input, alloc);
       jval.PushBack( inputJVal, alloc );
@@ -204,7 +206,7 @@ struct JsonTrait<rapidjson::Value, rapidjson::kArrayType>{
          const T& input,
          decltype( rapidjson::Document().GetAllocator() )& alloc )
    {
-      JsonTrait<typename std::remove_cv<T>::type> trait;
+      JsonTrait<typename std::decay<typename std::remove_cv_t<T>>::type> trait;
       jval.PushBack( const_cast<T&>(input), alloc );
    }
 };

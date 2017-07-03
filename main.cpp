@@ -25,6 +25,7 @@ void beforeUtils( )
    rapidjson::Writer<rapidjson::StringBuffer> writer{ buff };
    Obj.Accept( writer );
    std::cout<<"Output is: "<< buff.GetString() <<std::endl;
+
 }
 
 void usingUtils()
@@ -37,12 +38,21 @@ void usingUtils()
    std::cout<<"Output is: "<<Obj.toString()<<std::endl;
 }
 
+void fluentInterface()
+{
+   JsonObject<rapidjson::Value, rapidjson::kArrayType> stringArray;
+   stringArray.put( "Hello").put("World").put("Goodbye").put("World");
+   std::cout<<stringArray.toString()<<std::endl;
+}
+
 int main()
 {
    std::cout<<"Without Utils: \n";
    beforeUtils();
    std::cout<<"Using Utils: \n";
    usingUtils();
+   std::cout<<"Fluent Interface:\n";
+   fluentInterface();
    return 0;
 }
 
