@@ -72,18 +72,12 @@ int main()
    usingUtils();
    std::cout<<"Fluent Interface:\n";
    fluentInterface();
-
-   JsonObject<int> test;
-   test.put( 3 );
-   int x,y;
-   test.get( x );
-   std::cout<<"X is "<<x<<std::endl;
-   JsonObject<rapidjson::Value, rapidjson::kObjectType>  Obj;
-   Obj.put( "Y", 2 );
-   std::cout<<Obj.toString()<<std::endl;
-   Obj.get( "Y", y );
-   std::cout<<"Y is "<<y<<std::endl;
-   readAndWriteToJson();
+   std::cout<<JsonObject<rapidjson::Value, rapidjson::kObjectType>().
+      put( "Hello","World").
+      put("Goodbye","World").
+      put("X",3).
+      put("Y",4).
+      toString()<<std::endl;
    return 0;
 }
 
