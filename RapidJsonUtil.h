@@ -70,6 +70,71 @@ struct is_json<rapidjson::Value>{
    static constexpr bool value = true;
 };
 
+
+
+template <typename T, rapidjson::Type U = rapidjson::kNullType>
+class JsonObject
+{
+   static constexpr rapidjson::Type type = U;
+   JsonTrait<typename std::decay<T>::type,U>  _trait;
+   rapidjson::Value& _jsonVal;
+   rapidjson::Document _doc;
+   decltype( rapidjson::Document().GetAllocator() )& _allocator;
+public:
+   JsonObject( rapidjson::Value& val, 
+         decltype( rapidjson::Document().GetAllocator() )& alloc ):_jsonVal( val ),
+   _allocator( alloc ){
+      if( type == rapidjson::kObjectType )
+         _jsonVal.SetObject();
+      else if( type == rapidjson::kArrayType )
+         _jsonVal.SetArray();
+   }
+   JsonObject():_jsonVal( _doc ),
+   _allocator( _doc.GetAllocator() ){
+      if( type == rapidjson::kObjectType )
+         _jsonVal.SetObject();
+      else if( type == rapidjson::kArrayType )
+         _jsonVal.SetArray();
+   }
+   JsonObject( const JsonObject& obj ): 
+      _jsonVal( obj._jsonVal ),
+   _allocator( obj._allocator )
+   {
+   }
+
+   template<typename V>
+      void put(const V& val)
+      {
+         _trait.put( _jsonVal, val, _allocator );
+      }
+
+   template<typename V>
+      void put( const std::string& key, const V& val )
+      {
+         _trait.put( _jsonVal, key, val, _allocator );
+      }
+
+
+   operator rapidjson::Value&()
+   {
+      return _jsonVal;
+   }
+
+   operator const rapidjson::Value&()const
+   {
+      return _jsonVal;
+   }
+
+   std::string toString()
+   {
+      rapidjson::StringBuffer buff;
+      rapidjson::Writer<rapidjson::StringBuffer> writer{ buff };
+      _jsonVal.Accept( writer );
+      return std::string{ buff.GetString() };
+   }
+};
+
+
 template<>
 struct JsonTrait<rapidjson::Value, rapidjson::kObjectType>{
    enum{ value = rapidjson::kObjectType };
@@ -100,7 +165,8 @@ struct JsonTrait<rapidjson::Value, rapidjson::kObjectType>{
          JsonTrait<std::string> stringType;
          rapidjson::Value jKey;
          stringType.put( jKey, key, alloc );
-         jval.AddMember( jKey, const_cast<rapidjson::Value&>(val), alloc );
+         const rapidjson::Value& temp = static_cast<const rapidjson::Value&>( val );
+         jval.AddMember( jKey, const_cast<rapidjson::Value&>(temp), alloc );
       }
 
    template<typename T, typename X = typename std::enable_if<!is_json<typename std::remove_cv<T>::type>::value>::type, typename Y = void>
@@ -122,7 +188,6 @@ struct JsonTrait<rapidjson::Value, rapidjson::kObjectType>{
 
 template<>
 struct JsonTrait<rapidjson::Value, rapidjson::kArrayType>{
-   enum{ value = rapidjson::kArrayType };
 
    template<typename T, typename X =  std::enable_if_t<!is_json<typename std::remove_cv<T>::type>::value>>
    void put( rapidjson::Value& jval, T& input,
@@ -144,56 +209,20 @@ struct JsonTrait<rapidjson::Value, rapidjson::kArrayType>{
    }
 };
 
-template <typename T, rapidjson::Type U = rapidjson::kNullType>
-class JsonObject
+template<typename T, rapidjson::Type U>
+struct is_json<JsonObject<T,U>>{
+   static constexpr bool value = true;
+};
+
+
+
+template<>
+struct JsonTrait<JsonObject<rapidjson::Value, rapidjson::kObjectType>>: JsonTrait<rapidjson::Value, rapidjson::kObjectType>
 {
-   static constexpr rapidjson::Type type = U;
-   JsonTrait<typename std::decay<T>::type,U>  _trait;
-   rapidjson::Value& _jsonVal;
-   rapidjson::Document _doc;
-   decltype( rapidjson::Document().GetAllocator() )& _allocator;
-public:
-   JsonObject( rapidjson::Value& val, 
-         decltype( rapidjson::Document().GetAllocator() )& alloc ):_jsonVal( val ),
-   _allocator( alloc ){
-      if( type == rapidjson::kObjectType )
-         _jsonVal.SetObject();
-      else if( type == rapidjson::kArrayType )
-         _jsonVal.SetArray();
-   }
-   JsonObject():_jsonVal( _doc ),
-   _allocator( _doc.GetAllocator() ){
-      if( type == rapidjson::kObjectType )
-         _jsonVal.SetObject();
-      else if( type == rapidjson::kArrayType )
-         _jsonVal.SetArray();
-   }
+};
 
-   //template<typename V, typename X = typename std::enable_if<!is_json<typename std::remove_cv<V>::type>::value>::type>
-   template<typename V>
-      void put(const V& val)
-      {
-         _trait.put( _jsonVal, val, _allocator );
-      }
-
-   template<typename V>
-      void put( const std::string& key, const V& val )
-      {
-         _trait.put( _jsonVal, key, val, _allocator );
-      }
-
-
-   operator rapidjson::Value&()
-   {
-      return _jsonVal;
-   }
-
-   std::string toString()
-   {
-      rapidjson::StringBuffer buff;
-      rapidjson::Writer<rapidjson::StringBuffer> writer{ buff };
-      _jsonVal.Accept( writer );
-      return std::string{ buff.GetString() };
-   }
+template<>
+struct JsonTrait<JsonObject<rapidjson::Value, rapidjson::kArrayType>>: JsonTrait<rapidjson::Value, rapidjson::kArrayType>
+{
 };
 

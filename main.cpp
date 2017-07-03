@@ -33,7 +33,7 @@ void usingUtils()
    JsonObject<rapidjson::Value, rapidjson::kArrayType>  Array;
    for( int i = 0; i < 500; ++i )
       Array.put( i );
-   Obj.put(  "IntArray", static_cast<rapidjson::Value&>(Array) );
+   Obj.put(  "IntArray", Array );
    std::cout<<"Output is: "<<Obj.toString()<<std::endl;
 }
 
