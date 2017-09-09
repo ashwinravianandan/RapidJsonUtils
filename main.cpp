@@ -64,6 +64,7 @@ void readAndWriteToJson(){
 
 }
 
+
 int main()
 {
    std::cout<<"Without Utils: \n";
@@ -72,7 +73,7 @@ int main()
    usingUtils();
    std::cout<<"Fluent Interface:\n";
    fluentInterface();
-   std::cout<<JsonObject<rapidjson::Value, rapidjson::kObjectType>().
+   std::cout<<JObj().
       put( "Hello","World").
       put("Goodbye","World").
       put("X",3).

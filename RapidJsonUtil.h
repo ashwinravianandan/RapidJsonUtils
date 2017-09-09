@@ -70,8 +70,6 @@ struct is_json<rapidjson::Value>{
    static constexpr bool value = true;
 };
 
-
-
 template <typename T, rapidjson::Type U = rapidjson::kNullType>
 class JsonObject
 {
@@ -262,4 +260,7 @@ template<>
 struct JsonTrait<JsonObject<rapidjson::Value, rapidjson::kArrayType>>: JsonTrait<rapidjson::Value, rapidjson::kArrayType>
 {
 };
+
+using JObj = JsonObject<rapidjson::Value, rapidjson::kObjectType>;
+using JArr = JsonObject<rapidjson::Value, rapidjson::kObjectType>;
 
